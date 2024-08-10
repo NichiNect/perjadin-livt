@@ -12,9 +12,13 @@ defineProps({
     status: {
         type: String,
     },
+    // user: {
+    //     type: Object
+    // }
 });
 
 const user = usePage().props.auth.user;
+const role = usePage().props.user?.role;
 
 const form = useForm({
     name: user.name,
@@ -25,7 +29,12 @@ const form = useForm({
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
+            <h2 class="text-lg font-medium text-gray-900 my-3">
+                Profile Information
+                <span class="border border-green-500 rounded-lg py-1 px-3 mx-4 text-sm text-green-500">
+                    {{ role?.name }}
+                </span>
+            </h2>
 
             <p class="mt-1 text-sm text-gray-600">
                 Update your account's profile information and email address.
