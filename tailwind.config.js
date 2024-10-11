@@ -12,9 +12,21 @@ export default {
 
     theme: {
         extend: {
+            container: {
+                center: true,
+                padding: '16px'
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                primary: '#2563eb',
+                lightPrimary: '#60a5fa',
+                secondary: '#4b5563',
+                success: '#16a34a',
+                warning: '#ca8a04',
+                danger: '#dc2626',
+            }
         },
     },
 
