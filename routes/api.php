@@ -22,4 +22,5 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('picklist')->group(function () {
 
     Route::get('/role', [PicklistController::class, 'optionRole']);
+    Route::get('/province', [PicklistController::class, 'optionProvince']);
 });

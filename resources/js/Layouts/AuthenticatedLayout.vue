@@ -35,6 +35,9 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink :href="route('users.index')" :active="route().current('users.index')">
                                     User Management
                                 </NavLink>
+                                <NavLink :href="route('cities.index')" :active="route().current('cities.index')">
+                                    Master City
+                                </NavLink>
                             </div>
                         </div>
 

@@ -12,13 +12,14 @@ import InputLabel from '@/Components/InputLabel.vue';
 import SelectOptionInput from '@/Components/SelectOptionInput.vue';
 import axios from 'axios';
 import Loading from '@/Components/Base/Loading.vue';
+import Checkbox from '@/Components/Checkbox.vue';
 
 
 /**
  * * Variables
  */
 const props = defineProps({
-    user: Object,
+    city: Object,
     flash: Object,
     errors: Object
 });
@@ -35,12 +36,14 @@ const paginateData = ref({
 });
 const search = ref('');
 const selectedData = ref(null);
-const roleOptions = ref([]);
+const provinceOptions = ref([]);
 const form = useForm({
+    province_id: 0,
     name: '',
-    email: '',
-    role_id: 0,
-    password: ''
+    island: '',
+    latitude: 0,
+    longitude: 0,
+    is_foreign_country: false,
 });
 
 
@@ -50,7 +53,7 @@ const form = useForm({
 const onPaginateChange = async (data) => {
 
     paginateData.value = data;
-    router.get(`/users`, {
+    router.get(`/cities`, {
         page: data.pageActive
     });
 }
@@ -65,9 +68,8 @@ const deleteHandler = async (data, confirmation = false) => {
     selectedData.value = data;
 
     if (confirmation == true) {
-        console.log('remove data', data);
 
-        router.delete(`/users/${data?.id}`);
+        router.delete(`/cities/${data?.id}`);
 
         modalDeleteShow.value = false;
     }
@@ -78,7 +80,7 @@ const createNewHandler = async () => {
     loading.value = true;
 
     try {
-        form.post('/users', {
+        form.post('/cities', {
             onSuccess: () => {
                 modalCreateShow.value = false;
                 form.reset();
@@ -101,7 +103,7 @@ const updateHandler = async (data, confirmation = false) => {
         loading.value = true;
 
         try {
-            form.put(`/users/${data.id}`, {
+            form.put(`/cities/${data.id}`, {
                 onSuccess: () => {
                     modalUpdateShow.value = false;
                     form.reset();
@@ -114,9 +116,12 @@ const updateHandler = async (data, confirmation = false) => {
         }
     } else {
         // Set Default Data
+        form.province_id = data.province_id;
         form.name = data.name;
-        form.email = data.email;
-        form.role_id = data.role_id;
+        form.island = data.island;
+        form.latitude = data.latitude;
+        form.longitude = data.longitude;
+        form.is_foreign_country = data.is_foreign_country;
     }
 }
 
@@ -125,9 +130,9 @@ const updateHandler = async (data, confirmation = false) => {
  */
 onMounted(() => {
     paginateData.value = {
-        total: props.user?.total,
-        paginateRow: props.user?.per_page,
-        pageActive: props.user?.current_page,
+        total: props.city?.total,
+        paginateRow: props.city?.per_page,
+        pageActive: props.city?.current_page,
     }
 });
 
@@ -136,7 +141,7 @@ watch(search, () => {
 
     clearTimeout(debounceSearchStateTimer);
     debounceSearchStateTimer = setTimeout( async () => {
-        router.get(`/users`, {
+        router.get(`/cities`, {
             page: paginateData.value?.pageActive,
             search: search.value
         });
@@ -149,13 +154,13 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
 
         loading.value = true;
         try {
-            const { data } = await axios.get('/api/picklist/role');
+            const { data } = await axios.get('/api/picklist/province');
 
             if (data?.data) {
-                roleOptions.value = data.data;
+                provinceOptions.value = data.data;
             }
         } catch (err) {
-            console.error('Failed to fetch picklist role', err);
+            console.error('Failed to fetch picklist province', err);
         } finally {
             loading.value = false;
         }
@@ -171,7 +176,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">User Management</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Master City</h2>
         </template>
 
         <div v-if="$page.props.flash?.message" class="container rounded py-3 px-4 my-5" :class="props.flash?.class">
@@ -200,7 +205,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                 size="sm"
                                 @click="() => modalCreateShow = true"
                             >
-                                Add New User
+                                Add New City
                             </Button>
                         </div>
                     </div>
@@ -213,13 +218,22 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                         #
                                     </th>
                                     <th scope="col" class="px-6 py-3">
-                                        Name
+                                        City Name
                                     </th>
                                     <th scope="col" class="px-6 py-3">
-                                        Email
+                                        Province
                                     </th>
                                     <th scope="col" class="px-6 py-3">
-                                        Role
+                                        Island
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Foreign Country
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Latitude
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Longitude
                                     </th>
                                     <th scope="col" class="px-6 py-3">
                                         Action
@@ -227,20 +241,27 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(item, index) in props.user?.data" class="bg-white border-b hover:bg-gray-100">
+                                <tr v-for="(item, index) in props.city?.data" class="bg-white border-b hover:bg-gray-100">
                                     <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                        {{ (props.user?.current_page - 1) * props.user?.per_page + index + 1 }}
+                                        {{ (props.city?.current_page - 1) * props.city?.per_page + index + 1 }}
                                     </th>
                                     <th scope="row" class="px-6 py-4">
                                         {{ item.name }}
                                     </th>
-                                    <td class="px-6 py-4">
-                                        {{ item.email }}
+                                    <td class="px-6 py-4 capitalize">
+                                        {{ item?.province?.name }}
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span class="border border-green-500 rounded-lg py-1 px-3 mx-4 text-sm text-green-500">
-                                            {{ item?.role?.name }}
-                                        </span>
+                                        {{ item.island }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ item.is_foreign_country ? 'Yes' : 'No' }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ item.latitude }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ item.longitude }}
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex flex-wrap justify-center items-center gap-2">
@@ -286,7 +307,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
             <template #title>Are you sure?</template>
 
             <template #content>
-                <p class="text-center">Want to delete this user</p>
+                <p class="text-center">Want to delete this city</p>
             </template>
         </ModalConfirm>
 
@@ -296,7 +317,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
             @onClose="() => modalCreateShow = false"
         >
         <template #title>
-            <h6 class='text-xl font-semibold text-gray-600'>Create New User</h6>
+            <h6 class='text-xl font-semibold text-gray-600'>Create New City</h6>
             <p class='text-md text-gray-400 leading-4 mt-1'>Lorem ipsum dolor sit amet consectetur.</p>
             </template>
 
@@ -304,7 +325,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                 <Loading v-if="loading" class="p-20" />
                 <form v-else @submit.prevent="createNewHandler" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="name" value="Name" />
+                        <InputLabel for="name" value="City Name" />
                         <TextInput
                             id="name"
                             type="text"
@@ -316,35 +337,57 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                         <div v-if="props.errors.name" class="text-danger text-sm">{{ props.errors.name }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="email" value="Email" />
+                        <InputLabel for="island" value="Island Name" />
                         <TextInput
-                            id="email"
-                            type="email"
-                            v-model="form.email"
+                            id="island"
+                            type="text"
+                            v-model="form.island"
                             required
-                            autocomplete="email"
+                            autocomplete="island"
                         />
-                        <div v-if="props.errors.email" class="text-danger text-sm">{{ props.errors.email }}</div>
+                        <div v-if="props.errors.island" class="text-danger text-sm">{{ props.errors.island }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="role" value="Role" />
+                        <InputLabel for="province_id" value="Province" />
                         <SelectOptionInput
-                            id="role_id"
-                            v-model="form.role_id"
+                            id="province_id"
+                            v-model="form.province_id"
                             required
-                            :options="roleOptions"
+                            :options="provinceOptions"
                         />
-                        <div v-if="props.errors.role_id" class="text-danger text-sm">{{ props.errors.role_id }}</div>
+                        <div v-if="props.errors.province_id" class="text-danger text-sm">{{ props.errors.province_id }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="password" value="Password" />
+                        <InputLabel for="latitude" value="Latitude" />
                         <TextInput
-                            id="password"
-                            type="password"
-                            v-model="form.password"
-                            autocomplete="current-password"
+                            id="latitude"
+                            type="text"
+                            v-model="form.latitude"
+                            required
+                            autocomplete="latitude"
                         />
-                        <div v-if="props.errors.password" class="text-danger text-sm">{{ props.errors.password }}</div>
+                        <div v-if="props.errors.latitude" class="text-danger text-sm">{{ props.errors.latitude }}</div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <InputLabel for="longitude" value="Longitude" />
+                        <TextInput
+                            id="longitude"
+                            type="text"
+                            v-model="form.longitude"
+                            required
+                            autocomplete="longitude"
+                        />
+                        <div v-if="props.errors.longitude" class="text-danger text-sm">{{ props.errors.longitude }}</div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex flex-row justify-start items-center gap-2">
+                            <InputLabel for="is_foreign_country" value="Foreign Country" />
+                            <Checkbox
+                                name="remember"
+                                v-model:checked="form.is_foreign_country"
+                            />
+                        </div>
+                        <div v-if="props.errors.is_foreign_country" class="text-danger text-sm">{{ props.errors.is_foreign_country }}</div>
                     </div>
                     <div class="flex flex-col justify-end content-end">
                         <Button
@@ -366,7 +409,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
             @onClose="() => modalUpdateShow = false"
         >
         <template #title>
-            <h6 class='text-xl font-semibold text-gray-600'>Create New User</h6>
+            <h6 class='text-xl font-semibold text-gray-600'>Create New City</h6>
             <p class='text-md text-gray-400 leading-4 mt-1'>Lorem ipsum dolor sit amet consectetur.</p>
             </template>
 
@@ -374,9 +417,9 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                 <Loading v-if="loading" class="p-20" />
                 <form v-else @submit.prevent="updateHandler(selectedData, true)" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="updateName" value="Name" />
+                        <InputLabel for="name" value="City Name" />
                         <TextInput
-                            id="updateName"
+                            id="name"
                             type="text"
                             v-model="form.name"
                             required
@@ -386,35 +429,57 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                         <div v-if="props.errors.name" class="text-danger text-sm">{{ props.errors.name }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="updateEmail" value="Email" />
+                        <InputLabel for="island" value="Island Name" />
                         <TextInput
-                            id="updateEmail"
-                            type="email"
-                            v-model="form.email"
+                            id="island"
+                            type="text"
+                            v-model="form.island"
                             required
-                            autocomplete="email"
+                            autocomplete="island"
                         />
-                        <div v-if="props.errors.email" class="text-danger text-sm">{{ props.errors.email }}</div>
+                        <div v-if="props.errors.island" class="text-danger text-sm">{{ props.errors.island }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="updateRole_id" value="Role" />
+                        <InputLabel for="province_id" value="Province" />
                         <SelectOptionInput
-                            id="updateRole_id"
-                            v-model="form.role_id"
+                            id="province_id"
+                            v-model="form.province_id"
                             required
-                            :options="roleOptions"
+                            :options="provinceOptions"
                         />
-                        <div v-if="props.errors.role_id" class="text-danger text-sm">{{ props.errors.role_id }}</div>
+                        <div v-if="props.errors.province_id" class="text-danger text-sm">{{ props.errors.province_id }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="updatePassword" value="Password" />
+                        <InputLabel for="latitude" value="Latitude" />
                         <TextInput
-                            id="updatePassword"
-                            type="password"
-                            v-model="form.password"
-                            autocomplete="current-password"
+                            id="latitude"
+                            type="text"
+                            v-model="form.latitude"
+                            required
+                            autocomplete="latitude"
                         />
-                        <div v-if="props.errors.password" class="text-danger text-sm">{{ props.errors.password }}</div>
+                        <div v-if="props.errors.latitude" class="text-danger text-sm">{{ props.errors.latitude }}</div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <InputLabel for="longitude" value="Longitude" />
+                        <TextInput
+                            id="longitude"
+                            type="text"
+                            v-model="form.longitude"
+                            required
+                            autocomplete="longitude"
+                        />
+                        <div v-if="props.errors.longitude" class="text-danger text-sm">{{ props.errors.longitude }}</div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex flex-row justify-start items-center gap-2">
+                            <InputLabel for="is_foreign_country" value="Foreign Country" />
+                            <Checkbox
+                                name="remember"
+                                v-model:checked="form.is_foreign_country"
+                            />
+                        </div>
+                        <div v-if="props.errors.is_foreign_country" class="text-danger text-sm">{{ props.errors.is_foreign_country }}</div>
                     </div>
                     <div class="flex flex-col justify-end content-end">
                         <Button
