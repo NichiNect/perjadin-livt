@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CityController;
+use App\Http\Controllers\DutyTripController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
@@ -38,6 +39,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('/users', UserController::class)->except(['create', 'edit', 'show']);
     Route::resource('/cities', CityController::class)->except(['create', 'edit', 'show']);
+    Route::resource('/duty-trip-proposals', DutyTripController::class);
 });
 
 require __DIR__.'/auth.php';

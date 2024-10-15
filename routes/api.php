@@ -23,4 +23,6 @@ Route::prefix('picklist')->group(function () {
 
     Route::get('/role', [PicklistController::class, 'optionRole']);
     Route::get('/province', [PicklistController::class, 'optionProvince']);
+    Route::get('/city', [PicklistController::class, 'optionCity']);
+    Route::get('/user', [PicklistController::class, 'optionUser']);
 });

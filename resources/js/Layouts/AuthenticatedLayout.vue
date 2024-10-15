@@ -38,6 +38,9 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink :href="route('cities.index')" :active="route().current('cities.index')">
                                     Master City
                                 </NavLink>
+                                <NavLink :href="route('duty-trip-proposals.index')" :active="route().current('duty-trip-proposals.index')">
+                                    Duty Trip Proposal
+                                </NavLink>
                             </div>
                         </div>
 
