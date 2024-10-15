@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DutyTripStatus;
 use App\Models\DutyTrip;
 use App\Services\DutyTripService;
 use Carbon\Carbon;
@@ -17,12 +18,18 @@ class DutyTripController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
+        $statusFilter = $request->get('statusFilter', '');
 
         $credential = Auth::user();
 
         $dutyTrip = DutyTrip::with(['applicantUser', 'resolverUser', 'fromCity', 'destinationCity'])
             ->when($credential->role_id == 3, function ($q) use ($credential) { // role staff
                 return $q->where('applicant_user_id', $credential->id);
+            })
+            ->when($statusFilter != '', function ($q) use ($statusFilter) {
+                if ($statusFilter != 'all') {
+                    return $q->where('status', $statusFilter);
+                }
             })
             ->when($search != '', function ($q) use ($search) {
                 return $q->where('ticket_number', 'LIKE', '%' . $search . '%');
@@ -73,6 +80,33 @@ class DutyTripController extends Controller
 
         return redirect()->route('duty-trip-proposals.index')->with([
             'message' => 'Duty Trip Proposal created successfuly.',
+            'class' => 'bg-success'
+        ]);
+    }
+
+    /**
+     * Update status the selected resource in storage.
+     */
+    public function changeStatus(Request $request)
+    {
+        $this->authorize(['isAdmin', 'isSdm']);
+
+        $request->validate([
+            'id' => 'required|numeric',
+            'approvalStatus' => 'required|boolean',
+        ]);
+
+        $dutyTrip = DutyTrip::findOrFail($request->id);
+
+        $dutyTrip->resolver_user_id = Auth::id();
+        $dutyTrip->status = ($request->approvalStatus == true)
+            ? DutyTripStatus::Approved
+            : DutyTripStatus::Rejected;
+
+        $dutyTrip->save();
+
+        return redirect()->route('duty-trip-proposals.index')->with([
+            'message' => 'Duty Trip Proposal status updated successfuly.',
             'class' => 'bg-success'
         ]);
     }

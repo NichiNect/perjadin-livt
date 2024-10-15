@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('/users', UserController::class)->except(['create', 'edit', 'show']);
     Route::resource('/cities', CityController::class)->except(['create', 'edit', 'show']);
     Route::resource('/duty-trip-proposals', DutyTripController::class);
+    Route::post('/duty-trip-proposals/change-status', [DutyTripController::class, 'changeStatus'])->name('duty-trip-proposals.change-status');
 });
 
 require __DIR__.'/auth.php';

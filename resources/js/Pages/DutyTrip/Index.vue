@@ -5,15 +5,14 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import Button from '@/Components/Base/Button.vue';
 import Pagination from '@/Components/Base/Pagination.vue';
 import TextInput from '@/Components/TextInput.vue';
-import ModalConfirm from '@/Components/Base/Modal/ModalConfirm.vue';
 import ModalSide from '@/Components/Base/Modal/ModalSide.vue';
-import { faArrowRight, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faEye, faXmark } from '@fortawesome/free-solid-svg-icons';
 import InputLabel from '@/Components/InputLabel.vue';
 import SelectOptionInput from '@/Components/SelectOptionInput.vue';
 import axios from 'axios';
 import Loading from '@/Components/Base/Loading.vue';
-import Checkbox from '@/Components/Checkbox.vue';
 import { DateTime } from "luxon";
+import ModalDefault from '@/Components/Base/Modal/ModalDefault.vue';
 
 
 /**
@@ -27,9 +26,8 @@ const props = defineProps({
 });
 
 const loading = ref(false);
-const modalDeleteShow = ref(false);
 const modalCreateShow = ref(false);
-const modalUpdateShow = ref(false);
+const modalDetailShow = ref(false);
 
 const paginateData = ref({
   total: 100,
@@ -37,7 +35,13 @@ const paginateData = ref({
   pageActive: 1
 });
 const search = ref('');
-const selectedData = ref(null);
+const statusFilter = ref('');
+
+const selectedData = ref({
+    applicant_user_id: 0,
+    from_city_id: 0,
+    destination_city_id: 0,
+});
 const cityOptions = ref([]);
 const userOptions = ref([]);
 const form = useForm({
@@ -48,6 +52,10 @@ const form = useForm({
     final_date: '',
     applicant_user_id: 0,
 });
+
+let urlParams = new URLSearchParams(window.location.search);
+let statusFilterQuery = urlParams.get('statusFilter');
+console.log(urlParams.get('statusFilter'));
 
 
 /**
@@ -61,21 +69,28 @@ const onPaginateChange = async (data) => {
     });
 }
 
+const formatRupiah = (val) => {
+
+    if (val && val != null) {
+
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(val);
+    }
+
+    return '-';
+}
+
 
 /**
  * * Method Handlers
  */
-const deleteHandler = async (data, confirmation = false) => {
-
-    modalDeleteShow.value = true;
+const detailHandler = (data) => {
+    
+    modalDetailShow.value = true;
     selectedData.value = data;
-
-    if (confirmation == true) {
-
-        router.delete(`/duty-trip-proposals/${data?.id}`);
-
-        modalDeleteShow.value = false;
-    }
 }
 
 const createNewHandler = async () => {
@@ -96,35 +111,20 @@ const createNewHandler = async () => {
     }
 }
 
-const updateHandler = async (data, confirmation = false) => {
+const approveOrRejectHandler = async (approvalStatus) => {
+    // approvalStatus needs boolean value
+    loading.value = true;
 
-    modalUpdateShow.value = true;
-    selectedData.value = data;
-
-    if (confirmation == true) {
-
-        loading.value = true;
-
-        try {
-            form.put(`/cities/${data.id}`, {
-                onSuccess: () => {
-                    modalUpdateShow.value = false;
-                    form.reset();
-                }
-            });
-        } catch (err) {
-            console.error(err);
-        } finally {
-            loading.value = false;
-        }
-    } else {
-        // Set Default Data
-        form.province_id = data.province_id;
-        form.name = data.name;
-        form.island = data.island;
-        form.latitude = data.latitude;
-        form.longitude = data.longitude;
-        form.is_foreign_country = data.is_foreign_country;
+    try {
+        router.post(`/duty-trip-proposals/change-status`, {
+            id: selectedData.value?.id,
+            approvalStatus
+        });
+    } catch (err) {
+        console.error(err);
+    } finally {
+        loading.value = false;
+        modalDetailShow.value = false;
     }
 }
 
@@ -137,6 +137,7 @@ onMounted(() => {
         paginateRow: props.dutyTripProposal?.per_page,
         pageActive: props.dutyTripProposal?.current_page,
     }
+
 });
 
 let debounceSearchStateTimer;
@@ -151,9 +152,20 @@ watch(search, () => {
     }, 800);
 });
 
-watch ([modalCreateShow, modalUpdateShow], async () => {
+watch(statusFilter, (newVal, oldVal) => {
 
-    if (modalCreateShow.value == true || modalUpdateShow.value == true) {
+    if (newVal != oldVal) {
+        router.get('/duty-trip-proposals', {
+            page: paginateData.value?.pageActive,
+            statusFilter: statusFilter.value,
+            search: search.value,
+        });
+    }
+});
+
+watch ([modalCreateShow, modalDetailShow], async () => {
+
+    if (modalCreateShow.value == true || modalDetailShow.value == true) {
 
         loading.value = true;
         try {
@@ -207,6 +219,51 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
             </div>
         </div>
 
+        <div class="mt-10 mb-0">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg py-3 px-4">
+                    <div class="flex flex-row items-center gap-1">
+                        <Button
+                            :variant="statusFilter == 'all' || statusFilterQuery == 'all' ? 'solid' : 'outline'"
+                            type="submit"
+                            color="primary"
+                            size="xs"
+                            @click="() => statusFilter = 'all'"
+                        >
+                            All
+                        </Button>
+                        <Button
+                            :variant="statusFilter == 'proposed' || statusFilterQuery == 'proposed' ? 'solid' : 'outline'"
+                            type="submit"
+                            color="warning"
+                            size="xs"
+                            @click="() => statusFilter = 'proposed'"
+                        >
+                            Proposed
+                        </Button>
+                        <Button
+                            :variant="statusFilter == 'approved' || statusFilterQuery == 'approved' ? 'solid' : 'outline'"
+                            type="submit"
+                            color="success"
+                            size="xs"
+                            @click="() => statusFilter = 'approved'"
+                        >
+                            Approved
+                        </Button>
+                        <Button
+                            :variant="statusFilter == 'rejected' || statusFilterQuery == 'rejected' ? 'solid' : 'outline'"
+                            type="submit"
+                            color="danger"
+                            size="xs"
+                            @click="() => statusFilter = 'rejected'"
+                        >
+                            Rejected
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="my-10">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg py-4 px-4">
@@ -238,16 +295,16 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                         #
                                     </th>
                                     <th scope="col" class="px-6 py-3">
-                                        Applicator
+                                        Ticket Number
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Applicant
                                     </th>
                                     <th scope="col" class="px-6 py-3">
                                         City
                                     </th>
                                     <th scope="col" class="px-6 py-3">
                                         Date
-                                    </th>
-                                    <th scope="col" class="px-6 py-3">
-                                        Reasons
                                     </th>
                                     <th scope="col" class="px-6 py-3">
                                         Status
@@ -263,6 +320,9 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                         {{ (props.dutyTripProposal?.current_page - 1) * props.dutyTripProposal?.per_page + index + 1 }}
                                     </th>
                                     <th scope="row" class="px-6 py-4">
+                                        {{ item?.ticket_number }}
+                                    </th>
+                                    <th scope="row" class="px-6 py-4">
                                         {{ item?.applicant_user?.name }}
                                     </th>
                                     <td class="px-6 py-4 capitalize">
@@ -273,15 +333,12 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 text-center">
-                                        <div class="flex flex-row gap-2">
+                                        <div class="flex flex-row justify-center gap-2">
                                             {{ DateTime.fromFormat(item.start_date, 'yyyy-MM-dd').toFormat('dd-LLL-yyyy') }}
                                             <FontAwesomeIcon :icon="faArrowRight" class="w-3" />
                                             {{ DateTime.fromFormat(item.final_date, 'yyyy-MM-dd').toFormat('dd-LLL-yyyy') }}
                                         </div>
                                         <span>({{ DateTime.fromFormat(item.final_date, 'yyyy-MM-dd').diff(DateTime.fromFormat(item.start_date, 'yyyy-MM-dd'), ['days']).toObject()?.days }} days)</span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ item.description }}
                                     </td>
                                     <td class="px-6 py-4">
                                         <span v-if="item?.status == 'approved'" class="border border-green-500 rounded-lg py-1 px-3 mx-4 text-sm text-green-500 uppercase">
@@ -297,18 +354,13 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex flex-wrap justify-center items-center gap-2">
                                             <Button
-                                                color="warning"
-                                                size="xs"
-                                                @click="updateHandler(item)"
+                                                color="success"
+                                                size="sm"
+                                                variant="squareIcon"
+                                                :icon="faEye"
+                                                @click="detailHandler(item)"
                                             >
-                                                Edit
-                                            </Button>
-                                            <Button
-                                                color="danger"
-                                                size="xs"
-                                                @click="deleteHandler(item)"
-                                            >
-                                                Delete
+                                                <FontAwesomeIcon :icon="faEye" class="w-4" />
                                             </Button>
                                         </div>
                                     </td>
@@ -328,19 +380,6 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                 </div>
             </div>
         </div>
-
-        <!-- <ModalConfirm 
-            :show="modalDeleteShow"
-            :noAction="false"
-            @onClose="() => modalDeleteShow = false"
-            @onSubmit="deleteHandler(selectedData, true)"
-            >
-            <template #title>Are you sure?</template>
-
-            <template #content>
-                <p class="text-center">Want to delete this city</p>
-            </template>
-        </ModalConfirm> -->
 
         <ModalSide
             :show="modalCreateShow"
@@ -432,96 +471,116 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
             </template>
         </ModalSide>
 
-        <!-- <ModalSide
-            :show="modalUpdateShow"
-            width="40%"
-            @onClose="() => modalUpdateShow = false"
+        <ModalDefault
+            :show="modalDetailShow"
+            @onClose="() => modalDetailShow = false"
         >
-        <template #title>
-            <h6 class='text-xl font-semibold text-gray-600'>Create New City</h6>
-            <p class='text-md text-gray-400 leading-4 mt-1'>Lorem ipsum dolor sit amet consectetur.</p>
-            </template>
+            <template #title>Ticket {{ selectedData?.ticket_number }}</template>
 
             <template #content>
-                <Loading v-if="loading" class="p-20" />
-                <form v-else @submit.prevent="updateHandler(selectedData, true)" class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-1">
-                        <InputLabel for="name" value="City Name" />
-                        <TextInput
-                            id="name"
-                            type="text"
-                            v-model="form.name"
-                            required
-                            autofocus
-                            autocomplete="name"
-                        />
-                        <div v-if="props.errors.name" class="text-danger text-sm">{{ props.errors.name }}</div>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <InputLabel for="island" value="Island Name" />
-                        <TextInput
-                            id="island"
-                            type="text"
-                            v-model="form.island"
-                            required
-                            autocomplete="island"
-                        />
-                        <div v-if="props.errors.island" class="text-danger text-sm">{{ props.errors.island }}</div>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <InputLabel for="province_id" value="Province" />
+                <div class="flex flex-col gap-4">
+                    <div v-if="props.auth?.user?.role_id != 3" class="flex flex-col gap-1">
+                        <InputLabel for="applicant_user_id" value="Employee" />
                         <SelectOptionInput
-                            id="province_id"
-                            v-model="form.province_id"
+                            id="applicant_user_id"
+                            v-model="selectedData.applicant_user_id"
+                            required
+                            :options="userOptions"
+                            disabled
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <InputLabel for="from_city_id" value="From City" />
+                        <SelectOptionInput
+                            id="from_city_id"
+                            v-model="selectedData.from_city_id"
                             required
                             :options="cityOptions"
+                            disabled
                         />
-                        <div v-if="props.errors.province_id" class="text-danger text-sm">{{ props.errors.province_id }}</div>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <InputLabel for="latitude" value="Latitude" />
-                        <TextInput
-                            id="latitude"
-                            type="text"
-                            v-model="form.latitude"
+                        <InputLabel for="destination_city_id" value="Destination City" />
+                        <SelectOptionInput
+                            id="destination_city_id"
+                            v-model="selectedData.destination_city_id"
                             required
-                            autocomplete="latitude"
+                            :options="cityOptions"
+                            disabled
                         />
-                        <div v-if="props.errors.latitude" class="text-danger text-sm">{{ props.errors.latitude }}</div>
                     </div>
-                    <div class="flex flex-col gap-1">
-                        <InputLabel for="longitude" value="Longitude" />
-                        <TextInput
-                            id="longitude"
-                            type="text"
-                            v-model="form.longitude"
-                            required
-                            autocomplete="longitude"
-                        />
-                        <div v-if="props.errors.longitude" class="text-danger text-sm">{{ props.errors.longitude }}</div>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-row justify-start items-center gap-2">
-                            <InputLabel for="is_foreign_country" value="Foreign Country" />
-                            <Checkbox
-                                name="remember"
-                                v-model:checked="form.is_foreign_country"
+                    <div class="flex flex-row gap-3">
+                        <div class="w-full flex flex-col gap-1">
+                            <InputLabel for="start_date" value="Start Date" />
+                            <input 
+                                type="date" 
+                                id="start_date" 
+                                :value="selectedData?.start_date"
+                                class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                disabled
                             />
                         </div>
-                        <div v-if="props.errors.is_foreign_country" class="text-danger text-sm">{{ props.errors.is_foreign_country }}</div>
+                        <div class="w-full flex flex-col gap-1">
+                            <InputLabel for="final_date" value="Final Date" />
+                            <input 
+                                type="date" 
+                                id="final_date" 
+                                :value="selectedData?.final_date"
+                                class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                disabled
+                            />
+                        </div>
                     </div>
-                    <div class="flex flex-col justify-end content-end">
+                    <div class="flex flex-col gap-1">
+                        <InputLabel for="description" value="Reasons" />
+                        <textarea
+                            id="description"
+                            type="text"
+                            :value="selectedData?.description"
+                            required
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                            disabled
+                        />
+                    </div>
+                    <div v-if="props.auth?.user?.role_id != 3" class="bg-gray-200 rounded">
+                        <div class="grid grid-cols-3 gap-3 bg-blue-300 rounded-t text-center py-1">
+                            <div>Total Day</div>
+                            <div>Allowance Info</div>
+                            <div>Total Allowance</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 items-center text-center py-2">
+                            <div v-if="selectedData">
+                                {{ DateTime.fromFormat(selectedData?.final_date ?? '', 'yyyy-MM-dd').diff(DateTime.fromFormat(selectedData?.start_date ?? '', 'yyyy-MM-dd'), ['days']).toObject()?.days }} days
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <div>{{ selectedData?.distance }} KM</div>
+                                <div>{{ formatRupiah(selectedData?.allowance_per_day) }} / day</div>
+                            </div>
+                            <div>
+                                {{ formatRupiah(selectedData?.total_allowance) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="selectedData?.status == 'proposed' && props.auth?.user?.role_id != 3" class="flex flex-row justify-center gap-4">
+                        <Button
+                            type="submit"
+                            color="danger"
+                            size="sm"
+                            @click="approveOrRejectHandler(0)"
+                        >
+                            Reject
+                        </Button>
                         <Button
                             type="submit"
                             color="primary"
                             size="sm"
-                            :disabled="form.processing"
+                            @click="approveOrRejectHandler(1)"
                         >
-                            Submit
+                            Approve
                         </Button>
                     </div>
-                </form>
+                </div>
             </template>
-        </ModalSide> -->
+        </ModalDefault>
     </AuthenticatedLayout>
 </template>

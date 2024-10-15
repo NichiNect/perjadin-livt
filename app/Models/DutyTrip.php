@@ -73,8 +73,8 @@ class DutyTrip extends Model
      */
     public function generateTicketNumber() {
 
-        $zeroPadding = "000000000";
-        $prefixCode = 'DTP';
+        $zeroPadding = "00000000";
+        $prefixCode = 'DTP-';
         $code = "$prefixCode";
 
         $increment = 0;
