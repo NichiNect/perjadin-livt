@@ -7,6 +7,9 @@ import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
 
+/**
+ * * Variables
+ */
 const showingNavigationDropdown = ref(false);
 </script>
 
@@ -32,13 +35,13 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
                                     Dashboard
                                 </NavLink>
-                                <NavLink :href="route('users.index')" :active="route().current('users.index')">
+                                <NavLink v-if="$page.props.auth.can['user_management.index']" :href="route('users.index')" :active="route().current('users.index')">
                                     User Management
                                 </NavLink>
-                                <NavLink :href="route('cities.index')" :active="route().current('cities.index')">
+                                <NavLink v-if="$page.props.auth.can['master_city.index']" :href="route('cities.index')" :active="route().current('cities.index')">
                                     Master City
                                 </NavLink>
-                                <NavLink :href="route('duty-trip-proposals.index', {statusFilter: 'all'})" :active="route().current('duty-trip-proposals.index')">
+                                <NavLink v-if="$page.props.auth.can['duty_trip.index']" :href="route('duty-trip-proposals.index', {statusFilter: 'all'})" :active="route().current('duty-trip-proposals.index')">
                                     Duty Trip Proposal
                                 </NavLink>
                             </div>
@@ -123,6 +126,15 @@ const showingNavigationDropdown = ref(false);
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth.can['user_management.index']" :href="route('users.index')" :active="route().current('users.index')">
+                            User Management
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth.can['master_city.index']" :href="route('cities.index')" :active="route().current('cities.index')">
+                            Master City
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth.can['duty_trip.index']" :href="route('duty-trip-proposals.index', {statusFilter: 'all'})" :active="route().current('duty-trip-proposals.index')">
+                            Duty Trip Proposal
                         </ResponsiveNavLink>
                     </div>
 

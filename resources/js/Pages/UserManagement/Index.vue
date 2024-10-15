@@ -20,7 +20,8 @@ import Loading from '@/Components/Base/Loading.vue';
 const props = defineProps({
     user: Object,
     flash: Object,
-    errors: Object
+    errors: Object,
+    auth: Object
 });
 
 const loading = ref(false);
@@ -194,7 +195,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                 placeholder="Search.."
                             />
                         </div>
-                        <div>
+                        <div v-if="props.auth.can['user_management.create']">
                             <Button
                                 color="primary"
                                 size="sm"
@@ -205,7 +206,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                         </div>
                     </div>
 
-                    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <div class="relative overflow-x-auto shadow-md sm:rounded-lg scroll_control">
                         <table class="w-full text-sm text-left rtl:text-right text-gray-500">
                             <thead class="text-xs font-semibold text-gray-800 uppercase bg-gray-200">
                                 <tr>
@@ -221,7 +222,11 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                     <th scope="col" class="px-6 py-3">
                                         Role
                                     </th>
-                                    <th scope="col" class="px-6 py-3">
+                                    <th 
+                                        v-if="props.auth.can['user_management.edit'] || props.auth.can['user_management.delete']"
+                                        scope="col" 
+                                        class="px-6 py-3"
+                                    >
                                         Action
                                     </th>
                                 </tr>
@@ -242,9 +247,10 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                             {{ item?.role?.name }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 text-right">
+                                    <td v-if="props.auth.can['user_management.edit'] || props.auth.can['user_management.delete']" class="px-6 py-4 text-right">
                                         <div class="flex flex-wrap justify-center items-center gap-2">
                                             <Button
+                                                v-if="props.auth.can['user_management.edit']"
                                                 color="warning"
                                                 size="xs"
                                                 @click="updateHandler(item)"
@@ -252,6 +258,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                                 Edit
                                             </Button>
                                             <Button
+                                                v-if="props.auth.can['user_management.delete']"
                                                 color="danger"
                                                 size="xs"
                                                 @click="deleteHandler(item)"

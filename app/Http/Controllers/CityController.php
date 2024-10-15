@@ -23,7 +23,7 @@ class CityController extends Controller
             ->paginate(10);
 
         return Inertia::render('City', [
-            'city' => $city
+            'city' => $city,
         ]);
     }
 
@@ -40,6 +40,8 @@ class CityController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $request->validate([
             'province_id' => 'required|numeric|exists:provinces,id',
             'name' => 'required|string|max:255',
@@ -85,6 +87,8 @@ class CityController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $city = City::findOrFail($id);
 
         $request->validate([
@@ -115,6 +119,8 @@ class CityController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $city = City::findOrFail($id)
             ->delete();
 

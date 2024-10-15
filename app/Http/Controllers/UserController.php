@@ -14,6 +14,8 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $search = $request->get('search', '');
 
         $user = User::with('role')
@@ -42,6 +44,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users,email',
@@ -83,6 +87,8 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $user = User::findOrFail($id);
 
         $request->validate([
@@ -109,6 +115,8 @@ class UserController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
+        $this->authorize(['isAdmin', 'isSdm']);
+
         $user = User::findOrFail($id)
             ->delete();
 

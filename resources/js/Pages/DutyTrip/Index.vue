@@ -287,7 +287,7 @@ watch ([modalCreateShow, modalDetailShow], async () => {
                         </div>
                     </div>
 
-                    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <div class="relative overflow-x-auto shadow-md sm:rounded-lg scroll_control">
                         <table class="w-full text-sm text-left rtl:text-right text-gray-500">
                             <thead class="text-xs font-semibold text-gray-800 uppercase bg-gray-200">
                                 <tr>
@@ -561,7 +561,10 @@ watch ([modalCreateShow, modalDetailShow], async () => {
                             </div>
                         </div>
                     </div>
-                    <div v-if="selectedData?.status == 'proposed' && props.auth?.user?.role_id != 3" class="flex flex-row justify-center gap-4">
+                    <div 
+                        v-if="selectedData?.status == 'proposed' && $page.props.auth.can['duty_trip.resolve']"
+                        class="flex flex-row justify-center gap-4"
+                    >
                         <Button
                             type="submit"
                             color="danger"

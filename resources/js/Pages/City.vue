@@ -21,7 +21,8 @@ import Checkbox from '@/Components/Checkbox.vue';
 const props = defineProps({
     city: Object,
     flash: Object,
-    errors: Object
+    errors: Object,
+    auth: Object
 });
 
 const loading = ref(false);
@@ -179,7 +180,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Master City</h2>
         </template>
 
-        <div v-if="$page.props.flash?.message" class="container rounded py-3 px-4 my-5" :class="props.flash?.class">
+        <div v-if="props.flash?.message" class="container rounded py-3 px-4 my-5" :class="props.flash?.class">
             <div class="flex flex-row justify-between">
                 <p class="text-white">{{ props.flash?.message }}</p>
                 <!-- <FontAwesomeIcon :icon="faXmark" class="text-white w-3 hover:cursor-pointer" @click="(e) => e.target.parentNode.parentNode.remove()" /> -->
@@ -199,7 +200,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                 placeholder="Search.."
                             />
                         </div>
-                        <div>
+                        <div v-if="props.auth.can['master_city.create']">
                             <Button
                                 color="primary"
                                 size="sm"
@@ -235,7 +236,10 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                     <th scope="col" class="px-6 py-3">
                                         Longitude
                                     </th>
-                                    <th scope="col" class="px-6 py-3">
+                                    <th 
+                                        v-if="props.auth.can['master_city.edit'] || props.auth.can['master_city.delete']"
+                                        scope="col" class="px-6 py-3"
+                                    >
                                         Action
                                     </th>
                                 </tr>
@@ -263,9 +267,13 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                     <td class="px-6 py-4">
                                         {{ item.longitude }}
                                     </td>
-                                    <td class="px-6 py-4 text-right">
+                                    <td 
+                                        v-if="props.auth.can['master_city.edit'] || props.auth.can['master_city.delete']"
+                                        class="px-6 py-4 text-right"
+                                    >
                                         <div class="flex flex-wrap justify-center items-center gap-2">
                                             <Button
+                                                v-if="props.auth.can['master_city.edit']"
                                                 color="warning"
                                                 size="xs"
                                                 @click="updateHandler(item)"
@@ -273,6 +281,7 @@ watch ([modalCreateShow, modalUpdateShow], async () => {
                                                 Edit
                                             </Button>
                                             <Button
+                                                v-if="props.auth.can['master_city.delete']"
                                                 color="danger"
                                                 size="xs"
                                                 @click="deleteHandler(item)"
