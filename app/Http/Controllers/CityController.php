@@ -13,6 +13,8 @@ class CityController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('master_city.index');
+
         $search = $request->get('search', '');
 
         $city = City::with('province')
@@ -40,7 +42,7 @@ class CityController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('master_city.create');
 
         $request->validate([
             'province_id' => 'required|numeric|exists:provinces,id',
@@ -87,7 +89,7 @@ class CityController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('master_city.edit');
 
         $city = City::findOrFail($id);
 
@@ -119,7 +121,7 @@ class CityController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('master_city.delete');
 
         $city = City::findOrFail($id)
             ->delete();

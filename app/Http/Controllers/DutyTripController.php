@@ -17,6 +17,8 @@ class DutyTripController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('duty_trip.index');
+
         $search = $request->get('search', '');
         $statusFilter = $request->get('statusFilter', '');
 
@@ -47,6 +49,8 @@ class DutyTripController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('duty_trip.create');
+
         $credential = Auth::user();
 
         $request->validate([
@@ -89,7 +93,7 @@ class DutyTripController extends Controller
      */
     public function changeStatus(Request $request)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('duty_trip.resolve');
 
         $request->validate([
             'id' => 'required|numeric',

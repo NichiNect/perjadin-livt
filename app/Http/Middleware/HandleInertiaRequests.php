@@ -33,7 +33,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
-                'can' => [
+                'can' => ($request->user()) ? [
                     'user_management.index' => $request->user()->role_id != 3 ? true : false,
                     'user_management.create' => $request->user()->role_id != 3 ? true : false,
                     'user_management.edit' => $request->user()->role_id != 3 ? true : false,
@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
                     'duty_trip.index' => true,
                     'duty_trip.create' => true,
                     'duty_trip.reslove' => $request->user()->role_id != 3 ? true : false,
-                ]
+                ] : []
             ],
             'flash' => [
                 'message' => $request->session()->get('message'),

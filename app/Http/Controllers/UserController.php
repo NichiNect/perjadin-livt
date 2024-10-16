@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('user_management.index');
 
         $search = $request->get('search', '');
 
@@ -44,7 +44,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('user_management.create');
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -87,7 +87,7 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('user_management.edit');
 
         $user = User::findOrFail($id);
 
@@ -115,7 +115,7 @@ class UserController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $this->authorize(['isAdmin', 'isSdm']);
+        $this->authorize('user_management.delete');
 
         $user = User::findOrFail($id)
             ->delete();
